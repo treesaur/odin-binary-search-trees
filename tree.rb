@@ -2,11 +2,11 @@ require_relative "./node.rb"
 require_relative "./merge_sort.rb"
 
 class Tree
-  attr_accessor :root
+  attr_accessor :root, :sorted_arr
 
   def initialize(arr)
-    sorted_arr = merge_sort(arr)
-    @root = build_tree(sorted_arr)
+    @sorted_arr = merge_sort(arr)
+    @root = build_tree(@sorted_arr)
   end
 
   def build_tree(arr, start = 0, finish = arr.length - 1)
@@ -90,7 +90,7 @@ class Tree
   end
 
   # inorder: Left Root Right
-  def inorder(node = @root, &block)
+  def inorder(node = @root, output = [], &block)
     return if node.nil?
 
     if block_given?
@@ -98,14 +98,16 @@ class Tree
       block.call(node)
       inorder(node.right, &block)
     else
-      inorder(node.left)
-      print "#{node.data} "
-      inorder(node.right)
+      inorder(node.left, output)
+      output.push(node.data)
+      inorder(node.right, output)
     end
+
+    output
   end
 
   # preorder: Root Left Right (roots first)
-  def preorder(node = @root, &block)
+  def preorder(node = @root, output = [], &block)
     return if node.nil?
 
     if block_given?
@@ -113,14 +115,16 @@ class Tree
       preorder(node.left, &block)
       preorder(node.right, &block)
     else
-      print "#{node.data} "
-      preorder(node.left)
-      preorder(node.right)
+      output.push(node.data)
+      preorder(node.left, output)
+      preorder(node.right, output)
     end
+
+    output
   end
 
   # postorder: Left Right Root (leaves first)
-  def postorder(node = @root, &block)
+  def postorder(node = @root, output = [], &block)
     return if node.nil?
 
     if block_given?
@@ -128,25 +132,54 @@ class Tree
       postorder(node.right, &block)
       block.call(node)
     else
-      postorder(node.left, &block)
-      postorder(node.right, &block)
-      print "#{node.data} "
+      postorder(node.left, output)
+      postorder(node.right, output)
+      output.push(node.data)
+    end
+
+    output
+  end
+
+  def height(node = @root, height = -1) # number of edges from a given node to deepest leaf node
+    return height if node.nil?
+
+    left_max_height = height(node.left, height + 1)
+    right_max_height = height(node.right, height + 1)
+
+    if left_max_height > right_max_height
+      return left_max_height
+    else
+      return right_max_height
     end
   end
 
-  def height(node)
+  def depth(node = @root, parent = @root, edges = 0) # number of edges from a given node to root node
+    return edges if node == parent || parent.nil?
 
+    if node.data < parent.data
+      edges += 1
+      depth(node, parent.left, edges)
+    elsif node.data > parent.data
+      edges += 1
+      depth(node, parent.right, edges)
+    else
+      edges
+    end
   end
 
-  def depth(node)
+  def balanced?(node = root)
+    return true if node.nil?
 
-  end
+    left_height = height(node.left)
+    right_height = height(node.right)
 
-  def balanced?
+    return true if (left_height - right_height).abs <= 1 && balanced?(node.left) && balanced?(node.right)
 
+    false
   end
 
   def rebalance
-
+    @sorted_arr = self.inorder
+    @root = build_tree(@sorted_arr)
   end
 end
