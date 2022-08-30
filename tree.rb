@@ -66,24 +66,72 @@ class Tree
     node
   end
 
-  def find(value)
+  def find(value, node = @root)
+    return node if node.nil? || node.data == value
 
+    if value < node.data
+      find(value, node.left)
+    elsif value > node.data
+      find(value, node.right)
+    end
   end
 
   def level_order
-    yield
+      queue = [@root]
+      result = []
+      until queue.empty?
+        node = queue.shift
+        block_given? ? yield(node) : result << node.data
+        queue << node.left unless node.left.nil?
+        queue << node.right unless node.right.nil?
+      end
+
+      result unless block_given?
   end
 
-  def inorder
-    yield
+  # inorder: Left Root Right
+  def inorder(node = @root, &block)
+    return if node.nil?
+
+    if block_given?
+      inorder(node.left, &block)
+      block.call(node)
+      inorder(node.right, &block)
+    else
+      inorder(node.left)
+      print "#{node.data} "
+      inorder(node.right)
+    end
   end
 
-  def preorder
-    yield
+  # preorder: Root Left Right (roots first)
+  def preorder(node = @root, &block)
+    return if node.nil?
+
+    if block_given?
+      block.call(node)
+      preorder(node.left, &block)
+      preorder(node.right, &block)
+    else
+      print "#{node.data} "
+      preorder(node.left)
+      preorder(node.right)
+    end
   end
 
-  def postorder
-    yield
+  # postorder: Left Right Root (leaves first)
+  def postorder(node = @root, &block)
+    return if node.nil?
+
+    if block_given?
+      postorder(node.left, &block)
+      postorder(node.right, &block)
+      block.call(node)
+    else
+      postorder(node.left, &block)
+      postorder(node.right, &block)
+      print "#{node.data} "
+    end
   end
 
   def height(node)
